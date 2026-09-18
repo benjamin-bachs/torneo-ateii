@@ -281,6 +281,14 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
               <legend className="text-amber text-xs uppercase tracking-wide mb-3">
                 Inscripción
               </legend>
+              <div className="bg-pitchdeep border border-line px-4 py-3 mb-4 text-sm">
+                <p className="text-chalk/50 text-xs uppercase tracking-wide mb-1">
+                  Transferir a
+                </p>
+                <p className="text-chalk">
+                  Alias: <span className="font-semibold text-lime">ateii.unt</span> — a nombre de Paula González
+                </p>
+              </div>
               <label className="block text-sm mb-1">Comprobante de transferencia</label>
               <input
                 type="file"

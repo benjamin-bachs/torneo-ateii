@@ -37,6 +37,18 @@ create table if not exists jugadores (
   orden int not null
 );
 
+-- Un renglón por partido jugado (uno por ronda+número), con el equipo
+-- ganador. El admin la va completando desde /#admin a medida que
+-- avanza el torneo; el fixture público la lee para mostrar quién pasó.
+create table if not exists resultados (
+  id uuid primary key default gen_random_uuid(),
+  ronda text not null check (ronda in ('octavos', 'cuartos', 'semifinal', 'final')),
+  numero int not null,
+  equipo_ganador_id uuid not null references equipos(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (ronda, numero)
+);
+
 -- 2) SEGURIDAD (RLS) ----------------------------------------
 -- El público NO inserta directo en las tablas: todo pasa por la
 -- función inscribir_equipo() de abajo, que controla el cupo.
@@ -50,6 +62,45 @@ drop policy if exists "Cualquiera puede ver los equipos (fixture)" on equipos;
 create policy "Cualquiera puede ver los equipos (fixture)"
   on equipos for select
   using (true);
+
+-- Antes, cualquiera con la anon key podía pedir TODAS las columnas de
+-- equipos (incluido teléfono y DNI del capitán) aunque el sitio no las
+-- mostrara. Acá se restringe: el público solo puede leer las columnas
+-- necesarias para el fixture; el resto queda reservado al admin logueado.
+revoke select on equipos from anon;
+grant select (id, nombre_equipo, logo_url, posicion, created_at) on equipos to anon;
+grant select on equipos to authenticated;
+
+-- jugadores: nadie público puede leer nada (ni con policy ni con grant).
+-- Solo el admin autenticado (vos, una vez logueado) puede verlos.
+drop policy if exists "Admin autenticado puede ver jugadores" on jugadores;
+create policy "Admin autenticado puede ver jugadores"
+  on jugadores for select
+  using (auth.role() = 'authenticated');
+
+-- resultados: cualquiera puede LEER quién va ganando (para el fixture
+-- público); solo el admin autenticado puede cargar/editar/borrar.
+alter table resultados enable row level security;
+
+drop policy if exists "Cualquiera puede ver los resultados" on resultados;
+create policy "Cualquiera puede ver los resultados"
+  on resultados for select
+  using (true);
+
+drop policy if exists "Admin autenticado puede cargar resultados" on resultados;
+create policy "Admin autenticado puede cargar resultados"
+  on resultados for insert
+  with check (auth.role() = 'authenticated');
+
+drop policy if exists "Admin autenticado puede actualizar resultados" on resultados;
+create policy "Admin autenticado puede actualizar resultados"
+  on resultados for update
+  using (auth.role() = 'authenticated');
+
+drop policy if exists "Admin autenticado puede borrar resultados" on resultados;
+create policy "Admin autenticado puede borrar resultados"
+  on resultados for delete
+  using (auth.role() = 'authenticated');
 
 -- Nadie inserta/edita/borra directo en equipos ni jugadores;
 -- solo la función inscribir_equipo (SECURITY DEFINER) puede.
@@ -158,3 +209,10 @@ drop policy if exists "Cualquiera puede leer comprobantes" on storage.objects;
 create policy "Cualquiera puede leer comprobantes"
   on storage.objects for select
   using (bucket_id = 'comprobantes');
+
+-- 5) USUARIO ADMIN -------------------------------------------
+-- Esto NO se crea por SQL: andá a Supabase > Authentication > Users
+-- > Add user > cargá tu email y una contraseña, y tildá
+-- "Auto Confirm User" (así no hace falta que confirmes por mail).
+-- Ese es el único usuario que va a poder entrar a /#admin en el sitio
+-- y ver teléfonos, DNIs y descargar la planilla.

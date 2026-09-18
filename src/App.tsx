@@ -1,32 +1,60 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense, lazy } from 'react'
 import { supabase, CUPO_MAX_EQUIPOS } from './lib/supabase'
-import { Equipo } from './lib/types'
+import { EquipoFixture } from './lib/types'
+import { Resultado } from './lib/bracket'
 import Fixture from './components/Fixture'
 import RegistrationForm from './components/RegistrationForm'
 import ReglamentoTrigger from './components/ReglamentoModal'
 import SorteoReveal from './components/SorteoReveal'
 
+const AdminPanel = lazy(() => import('./components/AdminPanel'))
+
 type Vista = 'fixture' | 'formulario' | 'sorteo' | 'cupo_completo'
 
 export default function App() {
-  const [equipos, setEquipos] = useState<Equipo[]>([])
+  const [esAdmin] = useState(() => window.location.hash === '#admin')
+
+  if (esAdmin) {
+    return (
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center text-chalk/50 text-sm">
+            Cargando…
+          </div>
+        }
+      >
+        <AdminPanel />
+      </Suspense>
+    )
+  }
+
+  return <SitioPublico />
+}
+
+function SitioPublico() {
+  const [equipos, setEquipos] = useState<EquipoFixture[]>([])
+  const [resultados, setResultados] = useState<Resultado[]>([])
   const [cargando, setCargando] = useState(true)
   const [vista, setVista] = useState<Vista>('fixture')
   const [posicionSorteada, setPosicionSorteada] = useState<number | null>(null)
 
-  const cargarEquipos = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('equipos')
-      .select('id, nombre_equipo, logo_url, capitan_nombre, capitan_dni, capitan_telefono, posicion, created_at')
-      .order('posicion', { ascending: true })
+  const cargarTodo = useCallback(async () => {
+    const [{ data: eq, error: e1 }, { data: res, error: e2 }] = await Promise.all([
+      supabase
+        .from('equipos')
+        .select('id, nombre_equipo, logo_url, posicion, created_at')
+        .order('posicion', { ascending: true }),
+      supabase.from('resultados').select('ronda, numero, equipo_ganador_id'),
+    ])
 
-    if (!error && data) setEquipos(data as Equipo[])
+    if (!e1 && eq) setEquipos(eq as EquipoFixture[])
+    if (!e2 && res) setResultados(res as Resultado[])
     setCargando(false)
   }, [])
 
   useEffect(() => {
-    cargarEquipos()
-  }, [cargarEquipos])
+    cargarTodo()
+  }, [cargarTodo])
 
   const cupoCompleto = equipos.length >= CUPO_MAX_EQUIPOS
 
@@ -71,7 +99,7 @@ export default function App() {
               )}
             </div>
 
-            <Fixture equipos={equipos} />
+            <Fixture equipos={equipos} resultados={resultados} />
           </>
         )}
       </div>
@@ -82,11 +110,11 @@ export default function App() {
           onSuccess={(posicion) => {
             setPosicionSorteada(posicion)
             setVista('sorteo')
-            cargarEquipos()
+            cargarTodo()
           }}
           onCupoCompleto={() => {
             setVista('cupo_completo')
-            cargarEquipos()
+            cargarTodo()
           }}
         />
       )}

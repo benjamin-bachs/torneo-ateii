@@ -68,6 +68,36 @@ fijo para siempre. El sitio muestra una animación de números girando y
 después revela el casillero asignado. El fixture ubica a cada equipo según
 ese número, no según el orden en que se inscribió.
 
+## Panel admin: exportar la planilla y cargar resultados
+
+Hay una URL oculta, `/#admin` (ej. `https://tu-sitio.vercel.app/#admin`),
+con login y dos herramientas:
+
+- **Descargar planilla (.xlsx)**: dos hojas, resumen por equipo y
+  listado completo de jugadores con sus DNI.
+- **Fixture**: una lista de todos los partidos (octavos, cuartos,
+  semifinal, final). Tocás el equipo que ganó cada partido y el fixture
+  público se actualiza solo, mostrando quién pasó de ronda. Un partido
+  queda bloqueado ("Pendiente") hasta que los dos equipos que lo
+  juegan estén definidos (por ejemplo, un cruce de cuartos no se puede
+  cargar hasta cargar los dos octavos que lo alimentan). Si cambiás un
+  resultado ya cargado, los partidos posteriores que dependían de él se
+  borran automáticamente para que los vuelvas a cargar.
+
+**Para habilitarlo, una sola vez:**
+1. En Supabase, andá a **Authentication > Users > Add user**. Cargá tu
+   email y una contraseña, y tildá **"Auto Confirm User"**.
+2. Ese es el único usuario que va a poder entrar — no hay registro
+   público en el sitio.
+
+**Por qué es seguro** aunque cualquiera encuentre la URL `/#admin`: los
+datos sensibles (teléfono y DNI del capitán, DNIs de jugadores,
+comprobantes) están protegidos a nivel de base de datos — sin loguearte
+con ese usuario, Supabase directamente no te devuelve esa información,
+sin importar qué URL visites. El público en general solo puede leer el
+nombre, escudo y posición de cada equipo (lo necesario para el fixture)
+y quién ganó cada partido (para poder seguirlo en vivo).
+
 ## Ajustar valores
 
 - Cupo de equipos: `CUPO_MAX_EQUIPOS` en `src/lib/supabase.ts` **y**
@@ -87,8 +117,9 @@ ese número, no según el orden en que se inscribió.
 
 ## Nota si ya habías corrido una versión anterior del schema
 
-Esta versión cambia la tabla `equipos` (agrega `capitan_dni` y `posicion`)
-y la función `inscribir_equipo` (nuevos parámetros y tipo de retorno). Si
-ya habías ejecutado un `schema.sql` anterior en Supabase, corré este de
-nuevo completo — el `drop function` y los `create table if not exists` lo
-dejan todo consistente sin tener que borrar la base a mano.
+Esta versión, además de las tablas y la función, **revoca el acceso
+público a las columnas sensibles de `equipos`** (teléfono/DNI del
+capitán), agrega la tabla `resultados` (para que el admin pueda ir
+cargando quién gana cada partido) y sus políticas de acceso. Es
+importante volver a correr el `schema.sql` completo en el SQL Editor
+aunque ya lo hayas corrido antes, para que todo esto quede aplicado.
