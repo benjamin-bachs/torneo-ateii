@@ -3,6 +3,7 @@ import { supabase, CUPO_MAX_EQUIPOS } from './lib/supabase'
 import { Equipo } from './lib/types'
 import Fixture from './components/Fixture'
 import RegistrationForm from './components/RegistrationForm'
+import ReglamentoTrigger from './components/ReglamentoModal'
 
 type Vista = 'fixture' | 'formulario' | 'exito' | 'cupo_completo'
 
@@ -40,6 +41,9 @@ export default function App() {
           <p className="text-chalk/60 mt-3 text-sm max-w-md mx-auto">
             A beneficio del Bautismo de la carrera. Abierto solo a estudiantes de la FACET.
           </p>
+          <div className="mt-3">
+            <ReglamentoTrigger />
+          </div>
         </header>
 
         {cargando ? (

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { supabase, JUGADORES_MAX } from '../lib/supabase'
 import { JugadorInput } from '../lib/types'
+import LogoPicker from './LogoPicker'
+import ReglamentoTrigger from './ReglamentoModal'
 
 interface Props {
   onSuccess: () => void
@@ -8,7 +10,7 @@ interface Props {
   onClose: () => void
 }
 
-const JUGADORES_MIN = 6 // + capitán = 7, el mínimo para completar un equipo en cancha
+const JUGADORES_MIN = 5 // + capitán = 6, el mínimo para completar un equipo en cancha
 
 function crearJugadorVacio(): JugadorInput {
   return { nombre_apellido: '', dni: '' }
@@ -16,11 +18,10 @@ function crearJugadorVacio(): JugadorInput {
 
 export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }: Props) {
   const [nombreEquipo, setNombreEquipo] = useState('')
-  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreset, setLogoPreset] = useState<string | null>(null)
   const [capitanNombre, setCapitanNombre] = useState('')
   const [capitanTelefono, setCapitanTelefono] = useState('')
   const [jugadores, setJugadores] = useState<JugadorInput[]>([
-    crearJugadorVacio(),
     crearJugadorVacio(),
     crearJugadorVacio(),
     crearJugadorVacio(),
@@ -88,20 +89,19 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
 
     setEnviando(true)
     try {
-      let logoUrl: string | null = null
-      if (logoFile) logoUrl = await subirArchivo(logoFile, 'logos')
-
       let comprobanteUrl: string | null = null
       if (comprobanteFile) comprobanteUrl = await subirArchivo(comprobanteFile, 'comprobantes')
 
       const { data, error: rpcError } = await supabase.rpc('inscribir_equipo', {
         p_nombre_equipo: nombreEquipo.trim(),
-        p_logo_url: logoUrl,
+        p_logo_url: logoPreset,
         p_capitan_nombre: capitanNombre.trim(),
         p_capitan_telefono: capitanTelefono.trim(),
         p_comprobante_url: comprobanteUrl,
         p_comentarios: comentarios.trim() || null,
         p_jugadores: jugadoresValidos,
+        p_reglamento_aceptado: aceptaReglamento,
+        p_estudiantes_facet_confirmado: confirmaFacet,
       })
 
       if (rpcError) {
@@ -121,26 +121,34 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
   }
 
   return (
-    <div className="fixed inset-0 bg-pitchdeep/90 flex items-start md:items-center justify-center p-4 overflow-y-auto z-50">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-pitch border border-line w-full max-w-2xl p-6 md:p-8 my-8"
-      >
-        <div className="flex items-start justify-between mb-6">
-          <h2 className="title-stencil text-2xl text-chalk">INSCRIBIR EQUIPO</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-chalk/50 hover:text-chalk text-sm"
-          >
-            Cerrar ✕
-          </button>
-        </div>
+    <div
+      className="fixed inset-0 bg-pitchdeep/90 overflow-y-auto z-50"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="min-h-full flex justify-center px-4 py-10">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-pitch border border-line w-full max-w-2xl h-fit"
+        >
+          <div className="sticky top-0 bg-pitch border-b border-line px-6 md:px-8 py-4 flex items-center justify-between z-10">
+            <h2 className="title-stencil text-2xl text-chalk">INSCRIBIR EQUIPO</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar formulario"
+              className="text-chalk/50 hover:text-chalk text-xl leading-none px-2 py-1"
+            >
+              ✕
+            </button>
+          </div>
 
-        <div className="bg-amber/15 border border-amber text-amber text-sm px-4 py-3 mb-6">
-          Importante: todos los jugadores del equipo deben ser estudiantes de la
-          FACET. Vas a tener que confirmarlo antes de enviar.
-        </div>
+          <div className="p-6 md:p-8">
+          <div className="bg-amber/15 border border-amber text-amber text-sm px-4 py-3 mb-6">
+            Importante: todos los jugadores del equipo deben ser estudiantes de
+            la FACET. Vas a tener que confirmarlo antes de enviar.
+          </div>
 
         {/* Datos del equipo */}
         <fieldset className="mb-6">
@@ -159,13 +167,8 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
               />
             </div>
             <div>
-              <label className="block text-sm mb-1">Escudo / logo del equipo (opcional)</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
-                className="w-full text-sm text-chalk/80 file:mr-3 file:py-2 file:px-3 file:border file:border-line file:bg-pitchdeep file:text-chalk"
-              />
+              <label className="block text-sm mb-2">Escudo del equipo (opcional)</label>
+              <LogoPicker value={logoPreset} onChange={setLogoPreset} />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
@@ -262,7 +265,10 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
               onChange={(e) => setAceptaReglamento(e.target.checked)}
               className="mt-1"
             />
-            Leí y acepto el reglamento del torneo.
+            <span>
+              Leí y acepto el reglamento del torneo.{' '}
+              <ReglamentoTrigger label="(leerlo acá)" className="text-lime hover:underline" />
+            </span>
           </label>
           <label className="flex items-start gap-2 text-sm bg-amber/10 border border-amber/40 px-3 py-2">
             <input
@@ -290,14 +296,16 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={enviando}
-          className="w-full bg-lime text-pitchdeep font-bold py-3 title-stencil tracking-wide disabled:opacity-50"
-        >
-          {enviando ? 'ENVIANDO...' : 'CONFIRMAR INSCRIPCIÓN'}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={enviando}
+            className="w-full bg-lime text-pitchdeep font-bold py-3 title-stencil tracking-wide disabled:opacity-50"
+          >
+            {enviando ? 'ENVIANDO...' : 'CONFIRMAR INSCRIPCIÓN'}
+          </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

@@ -12,5 +12,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export const CUPO_MAX_EQUIPOS = 8
+export const CUPO_MAX_EQUIPOS = 16
 export const JUGADORES_MAX = 9 // además del capitán, que ya cuenta como jugador #1

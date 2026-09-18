@@ -52,7 +52,9 @@ create or replace function inscribir_equipo(
   p_capitan_telefono text,
   p_comprobante_url text,
   p_comentarios text,
-  p_jugadores jsonb -- [{ "nombre_apellido": "...", "dni": "..." }, ...]
+  p_jugadores jsonb, -- [{ "nombre_apellido": "...", "dni": "..." }, ...]
+  p_reglamento_aceptado boolean,
+  p_estudiantes_facet_confirmado boolean
 )
 returns uuid
 language plpgsql
@@ -60,7 +62,7 @@ security definer
 set search_path = public
 as $$
 declare
-  v_cupo_max int := 8;
+  v_cupo_max int := 16;
   v_equipo_id uuid;
   v_jugador jsonb;
   v_orden int := 1;
@@ -72,12 +74,16 @@ begin
     raise exception 'CUPO_COMPLETO: ya se inscribieron % equipos', v_cupo_max;
   end if;
 
+  if not p_reglamento_aceptado or not p_estudiantes_facet_confirmado then
+    raise exception 'Hay que aceptar el reglamento y confirmar que todos son estudiantes de la FACET.';
+  end if;
+
   insert into equipos (
     nombre_equipo, logo_url, capitan_nombre, capitan_telefono,
-    comprobante_url, comentarios
+    comprobante_url, comentarios, reglamento_aceptado, estudiantes_facet_confirmado
   ) values (
     p_nombre_equipo, p_logo_url, p_capitan_nombre, p_capitan_telefono,
-    p_comprobante_url, p_comentarios
+    p_comprobante_url, p_comentarios, p_reglamento_aceptado, p_estudiantes_facet_confirmado
   )
   returning id into v_equipo_id;
 
@@ -98,31 +104,18 @@ end;
 $$;
 
 -- Permitir que el rol público (anon) ejecute la función
-grant execute on function inscribir_equipo(text, text, text, text, text, text, jsonb)
+grant execute on function inscribir_equipo(text, text, text, text, text, text, jsonb, boolean, boolean)
   to anon;
 
--- 4) STORAGE: buckets para logos y comprobantes --------------
--- Creá los buckets desde el dashboard (Storage > New bucket):
---   - "logos"        (público)
---   - "comprobantes" (público, o privado si preferís restringir lectura)
--- Después corré esto para permitir que cualquiera SUBA archivos
--- (pero no liste ni borre los de otros):
-
-insert into storage.buckets (id, name, public)
-values ('logos', 'logos', true)
-on conflict (id) do nothing;
+-- 4) STORAGE: bucket para comprobantes de pago ---------------
+-- El escudo del equipo ahora es un ícono preseteado (no se sube
+-- archivo), así que solo hace falta bucket para comprobantes.
+-- Podés crearlo desde el dashboard (Storage > New bucket > "comprobantes")
+-- o dejar que esto lo cree:
 
 insert into storage.buckets (id, name, public)
 values ('comprobantes', 'comprobantes', true)
 on conflict (id) do nothing;
-
-create policy "Cualquiera puede subir logos"
-  on storage.objects for insert
-  with check (bucket_id = 'logos');
-
-create policy "Cualquiera puede leer logos"
-  on storage.objects for select
-  using (bucket_id = 'logos');
 
 create policy "Cualquiera puede subir comprobantes"
   on storage.objects for insert

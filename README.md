@@ -63,9 +63,10 @@ se pasa de 8 equipos.
 
 - Cupo de equipos: `CUPO_MAX_EQUIPOS` en `src/lib/supabase.ts` **y**
   `v_cupo_max` en la función `inscribir_equipo` de `schema.sql` (tienen que
-  coincidir).
-- Mínimo/máximo de jugadores por equipo: `JUGADORES_MIN` y `JUGADORES_MAX`
-  en `src/components/RegistrationForm.tsx` / `src/lib/supabase.ts`.
+  coincidir). Hoy está en 16 equipos (octavos, cuartos, semifinal y final).
+- Mínimo/máximo de jugadores por equipo: `JUGADORES_MIN` (en
+  `RegistrationForm.tsx`) y `JUGADORES_MAX` (en `supabase.ts`). Hoy es de 5
+  a 9 jugadores además del capitán (6 a 10 personas por equipo en total).
 
 ## Pendientes según el documento del torneo
 
