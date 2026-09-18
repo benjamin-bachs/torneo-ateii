@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0B1D16;
+  background-image:
+    linear-gradient(#122A20 1px, transparent 1px),
+    linear-gradient(90deg, #122A20 1px, transparent 1px);
+  background-size: 48px 48px;
+  color: #F4F2E8;
+  font-family: 'Inter', sans-serif;
+}
+
+.title-stencil {
+  font-family: 'Anton', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+*:focus-visible {
+  outline: 3px solid #D7FF3F;
+  outline-offset: 2px;
+}
