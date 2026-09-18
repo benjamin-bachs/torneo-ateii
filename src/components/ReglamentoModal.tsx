@@ -1,22 +1,17 @@
 import { useState } from 'react'
 
 const REGLAS = [
-  'Máximo 10 personas por equipo.',
-  'Se juega con 7 jugadores (contando el arquero).',
-  'Tolerancia de 10 minutos para el equipo que llegue tarde; cumplido el tiempo, gana el equipo presente.',
-  'Son 16 equipos. Eliminación directa: octavos, cuartos, semifinal y final.',
-  'Son 2 tiempos de 15 minutos cada uno.',
-  'La final se juega a 2 tiempos de 20 minutos.',
+  'Tolerancia de 10 minutos para los equipos; cumplido el tiempo, se considera ganador al equipo presente.',
+  'Eliminatorias: 2 tiempos de 15 minutos. Final: 2 tiempos de 20 minutos.',
   'En caso de empate, se define por penales a 3 tiros.',
   'No hay límite de cambios.',
-  'Para cambiar, avisar al árbitro; el jugador sale de la cancha antes de que ingrese el suplente.',
+  'Para hacer un cambio hay que avisarle al árbitro, y el jugador debe salir de la cancha antes de que ingrese el suplente.',
   'Hay tarjeta amarilla y roja.',
-  'La amarilla saca al jugador 2 minutos; cumplido el tiempo, vuelve a ingresar.',
-  'La roja deja al equipo con un jugador menos el resto del partido.',
-  'La roja directa deja afuera a ese jugador en la fase siguiente.',
+  'La tarjeta amarilla saca al jugador 2 minutos de la cancha.',
+  'La tarjeta roja deja al equipo con un jugador menos el resto del partido; si es directa, deja afuera a ese jugador en la fase siguiente.',
   'Los laterales se sacan con el pie, desde el piso.',
-  'Los laterales se cuentan 5 segundos; pasado ese tiempo, pasan al equipo contrario.',
-  'Los saques de arco no pueden pasar la mitad de la cancha.',
+  'Los laterales se cuentan 5 segundos; pasado ese tiempo, el lateral pasa al equipo contrario.',
+  'Los saques de arco del arquero no pueden pasar la mitad de la cancha.',
   'Máximo 5 segundos de pelota en mano para los arqueros.',
 ]
 

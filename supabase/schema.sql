@@ -1,6 +1,11 @@
 -- ==========================================================
 -- ESQUEMA: Torneo de Fútbol 6 Relámpago — FACET
 -- Pegar y ejecutar en Supabase > SQL Editor > New query > Run
+--
+-- Este script es seguro de correr más de una vez (usa IF NOT EXISTS
+-- y DROP ... IF EXISTS antes de crear cada cosa), así que si ya lo
+-- habías corrido antes, simplemente corré esta versión completa de
+-- nuevo sin miedo a errores de "ya existe".
 -- ==========================================================
 
 -- 1) TABLAS ------------------------------------------------
@@ -41,6 +46,7 @@ create table if not exists jugadores (
 alter table equipos enable row level security;
 alter table jugadores enable row level security;
 
+drop policy if exists "Cualquiera puede ver los equipos (fixture)" on equipos;
 create policy "Cualquiera puede ver los equipos (fixture)"
   on equipos for select
   using (true);
@@ -143,10 +149,12 @@ insert into storage.buckets (id, name, public)
 values ('comprobantes', 'comprobantes', true)
 on conflict (id) do nothing;
 
+drop policy if exists "Cualquiera puede subir comprobantes" on storage.objects;
 create policy "Cualquiera puede subir comprobantes"
   on storage.objects for insert
   with check (bucket_id = 'comprobantes');
 
+drop policy if exists "Cualquiera puede leer comprobantes" on storage.objects;
 create policy "Cualquiera puede leer comprobantes"
   on storage.objects for select
   using (bucket_id = 'comprobantes');

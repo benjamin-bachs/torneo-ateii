@@ -56,8 +56,9 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
   }
 
   async function subirArchivo(file: File, bucket: string): Promise<string> {
-    const ext = file.name.split('.').pop()
-    const path = `${crypto.randomUUID()}.${ext}`
+    const extCruda = file.name.includes('.') ? file.name.split('.').pop() ?? '' : ''
+    const ext = extCruda.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 10)
+    const path = ext ? `${crypto.randomUUID()}.${ext}` : crypto.randomUUID()
     const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file)
     if (uploadError) throw new Error(`No se pudo subir el archivo a ${bucket}: ${uploadError.message}`)
     const { data } = supabase.storage.from(bucket).getPublicUrl(path)
@@ -218,7 +219,7 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
                   Lista de jugadores
                 </legend>
                 <span className="text-xs text-chalk/50">
-                  {jugadores.length}/{JUGADORES_MAX}
+                  {jugadores.length + 1}/{JUGADORES_MAX + 1}
                 </span>
               </div>
               <div className="space-y-2">
