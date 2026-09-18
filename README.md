@@ -59,6 +59,15 @@ Todo el guardado pasa por una única función de la base de datos
 Así, aunque dos capitanes envíen el formulario en el mismo segundo, nunca
 se pasa de 8 equipos.
 
+## Cómo funciona el sorteo de posición
+
+Cuando un equipo termina de inscribirse, la misma función `inscribir_equipo`
+sortea al azar un casillero libre (1 a 16) y lo guarda en la columna
+`posicion` de ese equipo — no se puede repetir (columna `unique`) y queda
+fijo para siempre. El sitio muestra una animación de números girando y
+después revela el casillero asignado. El fixture ubica a cada equipo según
+ese número, no según el orden en que se inscribió.
+
 ## Ajustar valores
 
 - Cupo de equipos: `CUPO_MAX_EQUIPOS` en `src/lib/supabase.ts` **y**
@@ -75,3 +84,11 @@ se pasa de 8 equipos.
   comprobante si ya transfirieron.
 - Cargar el número de cuenta para transferencias en el texto del formulario
   o el reglamento.
+
+## Nota si ya habías corrido una versión anterior del schema
+
+Esta versión cambia la tabla `equipos` (agrega `capitan_dni` y `posicion`)
+y la función `inscribir_equipo` (nuevos parámetros y tipo de retorno). Si
+ya habías ejecutado un `schema.sql` anterior en Supabase, corré este de
+nuevo completo — el `drop function` y los `create table if not exists` lo
+dejan todo consistente sin tener que borrar la base a mano.

@@ -31,7 +31,7 @@ export default function LogoPicker({ value, onChange }: Props) {
         })}
       </div>
       <p className="text-xs text-chalk/40 mt-2">
-        {value ? 'Escudo seleccionado.' : 'Elegí un escudo para tu equipo (opcional).'}
+        {value ? 'Escudo seleccionado.' : 'Elegí un escudo para tu equipo.'}
       </p>
     </div>
   )

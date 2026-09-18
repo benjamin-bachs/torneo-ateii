@@ -3,7 +3,9 @@ export interface Equipo {
   nombre_equipo: string
   logo_url: string | null
   capitan_nombre: string
+  capitan_dni: string
   capitan_telefono: string
+  posicion: number | null
   created_at: string
 }
 

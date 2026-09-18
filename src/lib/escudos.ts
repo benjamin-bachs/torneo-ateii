@@ -1,4 +1,8 @@
-import { Zap, Star, Flame, Shield, Trophy, Target, Swords, CircleDot, LucideIcon } from 'lucide-react'
+import {
+  Zap, Star, Flame, Shield, Trophy, Target, Swords, CircleDot,
+  Rocket, Crown, Compass, Anchor, Gem, Skull, Hexagon, Diamond,
+  LucideIcon,
+} from 'lucide-react'
 
 export interface EscudoDef {
   id: string
@@ -15,6 +19,14 @@ export const ESCUDOS: EscudoDef[] = [
   { id: 'escudo-6', Icon: Target, color: '#F4F2E8' },
   { id: 'escudo-7', Icon: Swords, color: '#D7FF3F' },
   { id: 'escudo-8', Icon: CircleDot, color: '#F2A93B' },
+  { id: 'escudo-9', Icon: Rocket, color: '#D7FF3F' },
+  { id: 'escudo-10', Icon: Crown, color: '#F2A93B' },
+  { id: 'escudo-11', Icon: Compass, color: '#F4F2E8' },
+  { id: 'escudo-12', Icon: Anchor, color: '#D7FF3F' },
+  { id: 'escudo-13', Icon: Gem, color: '#F2A93B' },
+  { id: 'escudo-14', Icon: Skull, color: '#F4F2E8' },
+  { id: 'escudo-15', Icon: Hexagon, color: '#D7FF3F' },
+  { id: 'escudo-16', Icon: Diamond, color: '#F2A93B' },
 ]
 
 export const PRESET_PREFIX = 'preset:'

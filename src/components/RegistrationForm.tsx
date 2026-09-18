@@ -5,7 +5,7 @@ import LogoPicker from './LogoPicker'
 import ReglamentoTrigger from './ReglamentoModal'
 
 interface Props {
-  onSuccess: () => void
+  onSuccess: (posicion: number) => void
   onCupoCompleto: () => void
   onClose: () => void
 }
@@ -20,6 +20,7 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
   const [nombreEquipo, setNombreEquipo] = useState('')
   const [logoPreset, setLogoPreset] = useState<string | null>(null)
   const [capitanNombre, setCapitanNombre] = useState('')
+  const [capitanDni, setCapitanDni] = useState('')
   const [capitanTelefono, setCapitanTelefono] = useState('')
   const [jugadores, setJugadores] = useState<JugadorInput[]>([
     crearJugadorVacio(),
@@ -67,8 +68,12 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
     e.preventDefault()
     setError(null)
 
-    if (!nombreEquipo.trim() || !capitanNombre.trim() || !capitanTelefono.trim()) {
+    if (!nombreEquipo.trim() || !capitanNombre.trim() || !capitanDni.trim() || !capitanTelefono.trim()) {
       setError('Completá los datos del equipo y del capitán.')
+      return
+    }
+    if (!logoPreset) {
+      setError('Elegí un escudo para el equipo.')
       return
     }
     const jugadoresValidos = jugadores.filter(
@@ -96,6 +101,7 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
         p_nombre_equipo: nombreEquipo.trim(),
         p_logo_url: logoPreset,
         p_capitan_nombre: capitanNombre.trim(),
+        p_capitan_dni: capitanDni.trim(),
         p_capitan_telefono: capitanTelefono.trim(),
         p_comprobante_url: comprobanteUrl,
         p_comentarios: comentarios.trim() || null,
@@ -112,7 +118,7 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
         throw rpcError
       }
 
-      onSuccess()
+      onSuccess(data as number)
     } catch (err: any) {
       setError(err.message || 'Ocurrió un error al inscribir al equipo. Probá de nuevo.')
     } finally {
@@ -145,164 +151,192 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
           </div>
 
           <div className="p-6 md:p-8">
-          <div className="bg-amber/15 border border-amber text-amber text-sm px-4 py-3 mb-6">
-            Importante: todos los jugadores del equipo deben ser estudiantes de
-            la FACET. Vas a tener que confirmarlo antes de enviar.
-          </div>
+            <div className="bg-amber/15 border border-amber text-amber text-sm px-4 py-3 mb-6">
+              Importante: todos los jugadores del equipo deben ser estudiantes de
+              la FACET. Vas a tener que confirmarlo antes de enviar.
+            </div>
 
-        {/* Datos del equipo */}
-        <fieldset className="mb-6">
-          <legend className="text-amber text-xs uppercase tracking-wide mb-3">
-            Datos del equipo
-          </legend>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm mb-1">Nombre del equipo</label>
+            {/* Datos del equipo */}
+            <fieldset className="mb-6">
+              <legend className="text-amber text-xs uppercase tracking-wide mb-3">
+                Datos del equipo
+              </legend>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm mb-1">Nombre del equipo</label>
+                  <input
+                    type="text"
+                    value={nombreEquipo}
+                    onChange={(e) => setNombreEquipo(e.target.value)}
+                    className="w-full bg-pitchdeep border border-line px-3 py-2 text-chalk"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-2">Escudo del equipo</label>
+                  <LogoPicker value={logoPreset} onChange={setLogoPreset} />
+                </div>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm mb-1">Capitán (nombre y apellido)</label>
+                    <input
+                      type="text"
+                      value={capitanNombre}
+                      onChange={(e) => setCapitanNombre(e.target.value)}
+                      className="w-full bg-pitchdeep border border-line px-3 py-2 text-chalk"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">DNI del capitán</label>
+                    <input
+                      type="text"
+                      value={capitanDni}
+                      onChange={(e) => setCapitanDni(e.target.value)}
+                      className="w-full bg-pitchdeep border border-line px-3 py-2 text-chalk"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">Teléfono de contacto</label>
+                    <input
+                      type="tel"
+                      value={capitanTelefono}
+                      onChange={(e) => setCapitanTelefono(e.target.value)}
+                      className="w-full bg-pitchdeep border border-line px-3 py-2 text-chalk"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+
+            {/* Lista de buena fe */}
+            <fieldset className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <legend className="text-amber text-xs uppercase tracking-wide">
+                  Lista de jugadores
+                </legend>
+                <span className="text-xs text-chalk/50">
+                  {jugadores.length}/{JUGADORES_MAX}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {/* El capitán ya cuenta como jugador: fila fija, sin teléfono */}
+                <div className="flex gap-2 items-center bg-pitchdeep/60 border border-line px-3 py-2">
+                  <span className="text-xs text-lime uppercase tracking-wide shrink-0">
+                    Capitán
+                  </span>
+                  <span className="flex-1 text-sm text-chalk truncate">
+                    {capitanNombre || <span className="text-chalk/40">(nombre del capitán)</span>}
+                  </span>
+                  <span className="text-sm text-chalk/70">
+                    {capitanDni || <span className="text-chalk/40">DNI</span>}
+                  </span>
+                </div>
+
+                {jugadores.map((j, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nombre y apellido"
+                      value={j.nombre_apellido}
+                      onChange={(e) => actualizarJugador(i, 'nombre_apellido', e.target.value)}
+                      className="flex-1 bg-pitchdeep border border-line px-3 py-2 text-chalk text-sm"
+                    />
+                    <input
+                      type="text"
+                      placeholder="DNI"
+                      value={j.dni}
+                      onChange={(e) => actualizarJugador(i, 'dni', e.target.value)}
+                      className="w-32 bg-pitchdeep border border-line px-3 py-2 text-chalk text-sm"
+                    />
+                    {jugadores.length > JUGADORES_MIN && (
+                      <button
+                        type="button"
+                        onClick={() => quitarJugador(i)}
+                        className="text-chalk/40 hover:text-amber px-2"
+                        aria-label="Quitar jugador"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {jugadores.length < JUGADORES_MAX && (
+                <button
+                  type="button"
+                  onClick={agregarJugador}
+                  className="mt-3 text-sm text-lime hover:underline"
+                >
+                  + Agregar jugador
+                </button>
+              )}
+            </fieldset>
+
+            {/* Pago */}
+            <fieldset className="mb-6">
+              <legend className="text-amber text-xs uppercase tracking-wide mb-3">
+                Inscripción
+              </legend>
+              <label className="block text-sm mb-1">Comprobante de transferencia</label>
               <input
-                type="text"
-                value={nombreEquipo}
-                onChange={(e) => setNombreEquipo(e.target.value)}
-                className="w-full bg-pitchdeep border border-line px-3 py-2 text-chalk"
-                required
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => setComprobanteFile(e.target.files?.[0] ?? null)}
+                className="w-full text-sm text-chalk/80 file:mr-3 file:py-2 file:px-3 file:border file:border-line file:bg-pitchdeep file:text-chalk"
               />
-            </div>
-            <div>
-              <label className="block text-sm mb-2">Escudo del equipo (opcional)</label>
-              <LogoPicker value={logoPreset} onChange={setLogoPreset} />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm mb-1">Capitán/a (nombre y apellido)</label>
-                <input
-                  type="text"
-                  value={capitanNombre}
-                  onChange={(e) => setCapitanNombre(e.target.value)}
-                  className="w-full bg-pitchdeep border border-line px-3 py-2 text-chalk"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Teléfono de contacto</label>
-                <input
-                  type="tel"
-                  value={capitanTelefono}
-                  onChange={(e) => setCapitanTelefono(e.target.value)}
-                  className="w-full bg-pitchdeep border border-line px-3 py-2 text-chalk"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-        </fieldset>
+            </fieldset>
 
-        {/* Lista de buena fe */}
-        <fieldset className="mb-6">
-          <legend className="text-amber text-xs uppercase tracking-wide mb-3">
-            Lista de jugadores ({jugadores.length}/{JUGADORES_MAX}, sin contar al capitán)
-          </legend>
-          <div className="space-y-2">
-            {jugadores.map((j, i) => (
-              <div key={i} className="flex gap-2">
+            {/* Otros */}
+            <fieldset className="mb-6 space-y-3">
+              <legend className="text-amber text-xs uppercase tracking-wide mb-3">Otros</legend>
+              <label className="flex items-start gap-2 text-sm">
                 <input
-                  type="text"
-                  placeholder="Nombre y apellido"
-                  value={j.nombre_apellido}
-                  onChange={(e) => actualizarJugador(i, 'nombre_apellido', e.target.value)}
-                  className="flex-1 bg-pitchdeep border border-line px-3 py-2 text-chalk text-sm"
+                  type="checkbox"
+                  checked={aceptaReglamento}
+                  onChange={(e) => setAceptaReglamento(e.target.checked)}
+                  className="mt-1"
                 />
+                <span>
+                  Leí y acepto el reglamento del torneo.{' '}
+                  <ReglamentoTrigger label="(leerlo acá)" className="text-lime hover:underline" />
+                </span>
+              </label>
+              <label className="flex items-start gap-2 text-sm bg-amber/10 border border-amber/40 px-3 py-2">
                 <input
-                  type="text"
-                  placeholder="DNI"
-                  value={j.dni}
-                  onChange={(e) => actualizarJugador(i, 'dni', e.target.value)}
-                  className="w-32 bg-pitchdeep border border-line px-3 py-2 text-chalk text-sm"
+                  type="checkbox"
+                  checked={confirmaFacet}
+                  onChange={(e) => setConfirmaFacet(e.target.checked)}
+                  className="mt-1"
                 />
-                {jugadores.length > JUGADORES_MIN && (
-                  <button
-                    type="button"
-                    onClick={() => quitarJugador(i)}
-                    className="text-chalk/40 hover:text-amber px-2"
-                    aria-label="Quitar jugador"
-                  >
-                    ✕
-                  </button>
-                )}
+                Confirmo que todos los jugadores de este equipo son estudiantes de la FACET.
+              </label>
+              <div>
+                <label className="block text-sm mb-1">Comentarios u observaciones (opcional)</label>
+                <textarea
+                  value={comentarios}
+                  onChange={(e) => setComentarios(e.target.value)}
+                  rows={3}
+                  className="w-full bg-pitchdeep border border-line px-3 py-2 text-chalk text-sm"
+                />
               </div>
-            ))}
-          </div>
-          {jugadores.length < JUGADORES_MAX && (
+            </fieldset>
+
+            {error && (
+              <div className="bg-red-900/30 border border-red-700 text-red-200 text-sm px-4 py-3 mb-4">
+                {error}
+              </div>
+            )}
+
             <button
-              type="button"
-              onClick={agregarJugador}
-              className="mt-3 text-sm text-lime hover:underline"
+              type="submit"
+              disabled={enviando}
+              className="w-full bg-lime text-pitchdeep font-bold py-3 title-stencil tracking-wide disabled:opacity-50"
             >
-              + Agregar jugador
+              {enviando ? 'ENVIANDO...' : 'CONFIRMAR INSCRIPCIÓN'}
             </button>
-          )}
-        </fieldset>
-
-        {/* Pago */}
-        <fieldset className="mb-6">
-          <legend className="text-amber text-xs uppercase tracking-wide mb-3">
-            Inscripción / pago
-          </legend>
-          <label className="block text-sm mb-1">Comprobante de transferencia (si aplica)</label>
-          <input
-            type="file"
-            accept="image/*,application/pdf"
-            onChange={(e) => setComprobanteFile(e.target.files?.[0] ?? null)}
-            className="w-full text-sm text-chalk/80 file:mr-3 file:py-2 file:px-3 file:border file:border-line file:bg-pitchdeep file:text-chalk"
-          />
-        </fieldset>
-
-        {/* Otros */}
-        <fieldset className="mb-6 space-y-3">
-          <legend className="text-amber text-xs uppercase tracking-wide mb-3">Otros</legend>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={aceptaReglamento}
-              onChange={(e) => setAceptaReglamento(e.target.checked)}
-              className="mt-1"
-            />
-            <span>
-              Leí y acepto el reglamento del torneo.{' '}
-              <ReglamentoTrigger label="(leerlo acá)" className="text-lime hover:underline" />
-            </span>
-          </label>
-          <label className="flex items-start gap-2 text-sm bg-amber/10 border border-amber/40 px-3 py-2">
-            <input
-              type="checkbox"
-              checked={confirmaFacet}
-              onChange={(e) => setConfirmaFacet(e.target.checked)}
-              className="mt-1"
-            />
-            Confirmo que todos los jugadores de este equipo son estudiantes de la FACET.
-          </label>
-          <div>
-            <label className="block text-sm mb-1">Comentarios u observaciones (opcional)</label>
-            <textarea
-              value={comentarios}
-              onChange={(e) => setComentarios(e.target.value)}
-              rows={3}
-              className="w-full bg-pitchdeep border border-line px-3 py-2 text-chalk text-sm"
-            />
-          </div>
-        </fieldset>
-
-        {error && (
-          <div className="bg-red-900/30 border border-red-700 text-red-200 text-sm px-4 py-3 mb-4">
-            {error}
-          </div>
-        )}
-
-          <button
-            type="submit"
-            disabled={enviando}
-            className="w-full bg-lime text-pitchdeep font-bold py-3 title-stencil tracking-wide disabled:opacity-50"
-          >
-            {enviando ? 'ENVIANDO...' : 'CONFIRMAR INSCRIPCIÓN'}
-          </button>
           </div>
         </form>
       </div>

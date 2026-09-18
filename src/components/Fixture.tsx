@@ -40,10 +40,12 @@ function ColLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function Fixture({ equipos }: Props) {
-  const slots: (Equipo | undefined)[] = Array.from(
-    { length: CUPO_MAX_EQUIPOS },
-    (_, i) => equipos[i]
-  )
+  const slots: (Equipo | undefined)[] = Array.from({ length: CUPO_MAX_EQUIPOS }, () => undefined)
+  equipos.forEach((equipo) => {
+    if (equipo.posicion && equipo.posicion >= 1 && equipo.posicion <= CUPO_MAX_EQUIPOS) {
+      slots[equipo.posicion - 1] = equipo
+    }
+  })
 
   // 8 pares de octavos (16 equipos)
   const octavos = Array.from({ length: 8 }, (_, i) => [slots[i * 2], slots[i * 2 + 1]])
@@ -52,13 +54,9 @@ export default function Fixture({ equipos }: Props) {
 
   return (
     <div className="w-full">
-      <h2 className="title-stencil text-2xl md:text-3xl text-chalk mb-1">
+      <h2 className="title-stencil text-2xl md:text-3xl text-chalk mb-6">
         FIXTURE — ELIMINACIÓN DIRECTA
       </h2>
-      <p className="text-chalk/60 text-sm mb-6">
-        16 equipos. Octavos, cuartos, semifinal y final. Los cruces se sortean
-        el día del torneo.
-      </p>
 
       {/* Mobile: todo apilado en orden de lectura */}
       <div className="lg:hidden space-y-8">

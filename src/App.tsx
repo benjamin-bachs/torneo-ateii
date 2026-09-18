@@ -4,19 +4,21 @@ import { Equipo } from './lib/types'
 import Fixture from './components/Fixture'
 import RegistrationForm from './components/RegistrationForm'
 import ReglamentoTrigger from './components/ReglamentoModal'
+import SorteoReveal from './components/SorteoReveal'
 
-type Vista = 'fixture' | 'formulario' | 'exito' | 'cupo_completo'
+type Vista = 'fixture' | 'formulario' | 'sorteo' | 'cupo_completo'
 
 export default function App() {
   const [equipos, setEquipos] = useState<Equipo[]>([])
   const [cargando, setCargando] = useState(true)
   const [vista, setVista] = useState<Vista>('fixture')
+  const [posicionSorteada, setPosicionSorteada] = useState<number | null>(null)
 
   const cargarEquipos = useCallback(async () => {
     const { data, error } = await supabase
       .from('equipos')
-      .select('id, nombre_equipo, logo_url, capitan_nombre, capitan_telefono, created_at')
-      .order('created_at', { ascending: true })
+      .select('id, nombre_equipo, logo_url, capitan_nombre, capitan_dni, capitan_telefono, posicion, created_at')
+      .order('posicion', { ascending: true })
 
     if (!error && data) setEquipos(data as Equipo[])
     setCargando(false)
@@ -50,9 +52,7 @@ export default function App() {
           <p className="text-center text-chalk/50 text-sm">Cargando fixture…</p>
         ) : (
           <>
-            <Fixture equipos={equipos} />
-
-            <div className="mt-10 border-t border-line pt-6 flex flex-col items-center gap-4">
+            <div className="mb-10 border-b border-line pb-6 flex flex-col items-center gap-4">
               <p className="title-stencil text-lg text-chalk">
                 {equipos.length}/{CUPO_MAX_EQUIPOS} EQUIPOS INSCRIPTOS
               </p>
@@ -66,10 +66,12 @@ export default function App() {
                 </button>
               ) : (
                 <p className="text-amber font-semibold">
-                  Cupo completo — ya se anotaron los 8 equipos.
+                  Cupo completo — ya se anotaron los 16 equipos.
                 </p>
               )}
             </div>
+
+            <Fixture equipos={equipos} />
           </>
         )}
       </div>
@@ -77,8 +79,9 @@ export default function App() {
       {vista === 'formulario' && (
         <RegistrationForm
           onClose={() => setVista('fixture')}
-          onSuccess={() => {
-            setVista('exito')
+          onSuccess={(posicion) => {
+            setPosicionSorteada(posicion)
+            setVista('sorteo')
             cargarEquipos()
           }}
           onCupoCompleto={() => {
@@ -88,30 +91,19 @@ export default function App() {
         />
       )}
 
-      {vista === 'exito' && (
-        <div className="fixed inset-0 bg-pitchdeep/90 flex items-center justify-center p-4 z-50">
-          <div className="bg-pitch border border-line max-w-md w-full p-8 text-center">
-            <h2 className="title-stencil text-2xl text-lime mb-3">¡EQUIPO INSCRIPTO!</h2>
-            <p className="text-chalk/80 text-sm mb-6">
-              Guardamos los datos de tu equipo. Nos vemos el 25 de septiembre en el
-              Complejo Dickens.
-            </p>
-            <button
-              onClick={() => setVista('fixture')}
-              className="bg-lime text-pitchdeep font-bold px-6 py-2 title-stencil"
-            >
-              VER FIXTURE
-            </button>
-          </div>
-        </div>
+      {vista === 'sorteo' && posicionSorteada !== null && (
+        <SorteoReveal
+          posicionFinal={posicionSorteada}
+          onDone={() => setVista('fixture')}
+        />
       )}
 
       {vista === 'cupo_completo' && (
-        <div className="fixed inset-0 bg-pitchdeep/90 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-pitchdeep flex items-center justify-center p-4 z-50">
           <div className="bg-pitch border border-line max-w-md w-full p-8 text-center">
             <h2 className="title-stencil text-2xl text-amber mb-3">CUPO COMPLETO</h2>
             <p className="text-chalk/80 text-sm mb-6">
-              Justo se completaron los 8 equipos mientras cargabas el formulario.
+              Justo se completaron los 16 equipos mientras cargabas el formulario.
               ¡Gracias por el interés!
             </p>
             <button
