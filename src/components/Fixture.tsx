@@ -9,19 +9,19 @@ interface Props {
 function Slot({ equipo, numero }: { equipo?: Equipo; numero: number }) {
   const escudo = escudoDeId(equipo?.logo_url)
   return (
-    <div className="flex items-center gap-3 bg-pitch border border-line px-4 py-3">
+    <div className="flex items-center gap-3 bg-pitch border border-line px-4 py-3 min-w-0">
       <span className="title-stencil text-lime text-sm w-6 text-center shrink-0">
         {numero}
       </span>
       {equipo ? (
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="w-8 h-8 bg-pitchdeep border border-line shrink-0 flex items-center justify-center">
             {escudo && <escudo.Icon size={16} color={escudo.color} strokeWidth={2} />}
           </div>
-          <span className="truncate font-semibold">{equipo.nombre_equipo}</span>
+          <span className="truncate font-semibold text-sm">{equipo.nombre_equipo}</span>
         </div>
       ) : (
-        <span className="text-chalk/40 italic">Vacante</span>
+        <span className="text-chalk/40 italic text-sm">Vacante</span>
       )}
     </div>
   )
