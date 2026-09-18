@@ -9,14 +9,14 @@ interface Props {
 function Slot({ equipo, numero }: { equipo?: Equipo; numero: number }) {
   const escudo = escudoDeId(equipo?.logo_url)
   return (
-    <div className="flex items-center gap-3 bg-pitch border border-line px-4 py-3 min-w-0">
-      <span className="title-stencil text-lime text-sm w-6 text-center shrink-0">
+    <div className="flex items-center gap-2 bg-pitch border border-line px-3 py-3 min-w-0">
+      <span className="title-stencil text-lime text-sm w-5 text-center shrink-0">
         {numero}
       </span>
       {equipo ? (
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="w-8 h-8 bg-pitchdeep border border-line shrink-0 flex items-center justify-center">
-            {escudo && <escudo.Icon size={16} color={escudo.color} strokeWidth={2} />}
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="w-7 h-7 bg-pitchdeep border border-line shrink-0 flex items-center justify-center">
+            {escudo && <escudo.Icon size={14} color={escudo.color} strokeWidth={2} />}
           </div>
           <span className="truncate font-semibold text-sm">{equipo.nombre_equipo}</span>
         </div>
@@ -95,7 +95,10 @@ export default function Fixture({ equipos }: Props) {
 
       {/* Desktop grande: grid tipo bracket con 4 rondas.
           8 filas de contenido (una por par de octavos), filas 2 a 9. */}
-      <div className="hidden lg:grid lg:grid-cols-4 lg:gap-x-8 lg:gap-y-3">
+      <div
+        className="hidden lg:grid lg:gap-x-6 lg:gap-y-3"
+        style={{ gridTemplateColumns: '1.7fr 1fr 1fr 1fr' }}
+      >
         <div className="col-start-1 row-start-1"><ColLabel>Octavos de final</ColLabel></div>
         <div className="col-start-2 row-start-1"><ColLabel>Cuartos de final</ColLabel></div>
         <div className="col-start-3 row-start-1"><ColLabel>Semifinal</ColLabel></div>

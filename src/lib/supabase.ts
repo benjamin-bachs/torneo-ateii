@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+// Se saca la barra "/" final si la tiene: una URL con barra de más
+// (ej. "https://xxx.supabase.co/") rompe las rutas de Storage con el
+// error "Invalid path specified in request URL".
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string)?.replace(/\/+$/, '')
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 if (!supabaseUrl || !supabaseAnonKey) {

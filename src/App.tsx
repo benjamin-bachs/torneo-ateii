@@ -32,7 +32,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen px-4 py-10 md:py-16">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl lg:max-w-6xl mx-auto">
         <header className="mb-10 text-center">
           <p className="text-amber text-xs uppercase tracking-widest mb-2">
             25 de septiembre · Complejo Dickens · 10:00 a 17:00
