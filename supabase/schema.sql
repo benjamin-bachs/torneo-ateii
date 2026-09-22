@@ -29,6 +29,12 @@ create table if not exists equipos (
 alter table equipos add column if not exists capitan_dni text;
 alter table equipos add column if not exists posicion int unique;
 
+-- Respaldo a nivel de base: aunque algo pase por alto la función,
+-- esto impide que dos equipos queden con el mismo escudo.
+create unique index if not exists equipos_logo_url_unique_idx
+  on equipos (logo_url)
+  where logo_url is not null;
+
 create table if not exists jugadores (
   id uuid primary key default gen_random_uuid(),
   equipo_id uuid not null references equipos(id) on delete cascade,
@@ -148,6 +154,14 @@ begin
 
   if p_logo_url is null or p_logo_url = '' then
     raise exception 'Hay que elegir un escudo para el equipo.';
+  end if;
+
+  if p_comprobante_url is null or p_comprobante_url = '' then
+    raise exception 'Hay que subir el comprobante de transferencia.';
+  end if;
+
+  if exists (select 1 from equipos where logo_url = p_logo_url) then
+    raise exception 'ESCUDO_OCUPADO: ese escudo ya lo eligió otro equipo';
   end if;
 
   -- Sortea una posición al azar entre las que todavía estén libres

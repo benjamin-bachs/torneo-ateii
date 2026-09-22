@@ -87,7 +87,10 @@ function SitioPublico() {
 
               {!cupoCompleto ? (
                 <button
-                  onClick={() => setVista('formulario')}
+                  onClick={() => {
+                    cargarTodo()
+                    setVista('formulario')
+                  }}
                   className="bg-lime text-pitchdeep font-bold px-8 py-3 title-stencil text-lg tracking-wide hover:brightness-110 transition"
                 >
                   INSCRIBIRSE
@@ -106,6 +109,8 @@ function SitioPublico() {
 
       {vista === 'formulario' && (
         <RegistrationForm
+          escudosOcupados={equipos.map((e) => e.logo_url).filter((v): v is string => !!v)}
+          onEscudoActualizado={cargarTodo}
           onClose={() => setVista('fixture')}
           onSuccess={(posicion) => {
             setPosicionSorteada(posicion)

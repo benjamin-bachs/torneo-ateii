@@ -8,6 +8,8 @@ interface Props {
   onSuccess: (posicion: number) => void
   onCupoCompleto: () => void
   onClose: () => void
+  escudosOcupados: string[]
+  onEscudoActualizado: () => void
 }
 
 const JUGADORES_MIN = 5 // + capitán = 6, el mínimo para completar un equipo en cancha
@@ -16,7 +18,13 @@ function crearJugadorVacio(): JugadorInput {
   return { nombre_apellido: '', dni: '' }
 }
 
-export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }: Props) {
+export default function RegistrationForm({
+  onSuccess,
+  onCupoCompleto,
+  onClose,
+  escudosOcupados,
+  onEscudoActualizado,
+}: Props) {
   const [nombreEquipo, setNombreEquipo] = useState('')
   const [logoPreset, setLogoPreset] = useState<string | null>(null)
   const [capitanNombre, setCapitanNombre] = useState('')
@@ -77,6 +85,10 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
       setError('Elegí un escudo para el equipo.')
       return
     }
+    if (!comprobanteFile) {
+      setError('Subí el comprobante de transferencia.')
+      return
+    }
     const jugadoresValidos = jugadores.filter(
       (j) => j.nombre_apellido.trim() && j.dni.trim()
     )
@@ -95,8 +107,7 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
 
     setEnviando(true)
     try {
-      let comprobanteUrl: string | null = null
-      if (comprobanteFile) comprobanteUrl = await subirArchivo(comprobanteFile, 'comprobantes')
+      const comprobanteUrl = await subirArchivo(comprobanteFile, 'comprobantes')
 
       const { data, error: rpcError } = await supabase.rpc('inscribir_equipo', {
         p_nombre_equipo: nombreEquipo.trim(),
@@ -114,6 +125,12 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
       if (rpcError) {
         if (rpcError.message.includes('CUPO_COMPLETO')) {
           onCupoCompleto()
+          return
+        }
+        if (rpcError.message.includes('ESCUDO_OCUPADO')) {
+          setLogoPreset(null)
+          onEscudoActualizado()
+          setError('Justo se lo agarraron mientras completabas el formulario. Elegí otro escudo.')
           return
         }
         throw rpcError
@@ -175,7 +192,7 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
                 </div>
                 <div>
                   <label className="block text-sm mb-2">Escudo del equipo</label>
-                  <LogoPicker value={logoPreset} onChange={setLogoPreset} />
+                  <LogoPicker value={logoPreset} onChange={setLogoPreset} ocupados={escudosOcupados} />
                 </div>
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div>
@@ -281,13 +298,18 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
               <legend className="text-amber text-xs uppercase tracking-wide mb-3">
                 Inscripción
               </legend>
-              <div className="bg-pitchdeep border border-line px-4 py-3 mb-4 text-sm">
-                <p className="text-chalk/50 text-xs uppercase tracking-wide mb-1">
-                  Transferir a
+              <div className="bg-pitchdeep border border-line px-4 py-3 mb-4 text-sm space-y-2">
+                <p>
+                  Costo: <span className="font-semibold text-lime">$30.000</span> por equipo
                 </p>
-                <p className="text-chalk">
-                  Alias: <span className="font-semibold text-lime">ateii.unt</span> — a nombre de Paula González
-                </p>
+                <div>
+                  <p className="text-chalk/50 text-xs uppercase tracking-wide mb-1">
+                    Transferir a
+                  </p>
+                  <p className="text-chalk">
+                    Alias: <span className="font-semibold text-lime">ateii.unt</span> — a nombre de Paula González
+                  </p>
+                </div>
               </div>
               <label className="block text-sm mb-1">Comprobante de transferencia</label>
               <input
@@ -295,6 +317,7 @@ export default function RegistrationForm({ onSuccess, onCupoCompleto, onClose }:
                 accept="image/*,application/pdf"
                 onChange={(e) => setComprobanteFile(e.target.files?.[0] ?? null)}
                 className="w-full text-sm text-chalk/80 file:mr-3 file:py-2 file:px-3 file:border file:border-line file:bg-pitchdeep file:text-chalk"
+                required
               />
             </fieldset>
 
