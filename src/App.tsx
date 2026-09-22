@@ -81,9 +81,9 @@ function SitioPublico() {
         ) : (
           <>
             <div className="mb-10 border-b border-line pb-6 flex flex-col items-center gap-4">
-              <p className="title-stencil text-lg text-chalk">
+             {/*  <p className="title-stencil text-lg text-chalk">
                 {equipos.length}/{CUPO_MAX_EQUIPOS} EQUIPOS INSCRIPTOS
-              </p>
+              </p> */}
 
               {!cupoCompleto ? (
                 <button
@@ -102,7 +102,7 @@ function SitioPublico() {
               )}
             </div>
 
-            <Fixture equipos={equipos} resultados={resultados} />
+            {/* <Fixture equipos={equipos} resultados={resultados} /> */}
           </>
         )}
       </div>
