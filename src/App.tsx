@@ -1,3 +1,5 @@
+/* a */
+
 import { useEffect, useState, useCallback, Suspense, lazy } from 'react'
 import { supabase, CUPO_MAX_EQUIPOS } from './lib/supabase'
 import { EquipoFixture } from './lib/types'
