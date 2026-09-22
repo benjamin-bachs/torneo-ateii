@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { EquipoCompleto, JugadorCompleto } from '../lib/types'
 import BracketEditor from './BracketEditor'
+import EquiposAdmin from './EquiposAdmin'
 
 export default function AdminPanel() {
   const [session, setSession] = useState<Session | null>(null)
@@ -192,6 +193,11 @@ export default function AdminPanel() {
           {errorExport && (
             <p className="text-red-300 text-sm mt-4">{errorExport}</p>
           )}
+        </div>
+
+        <div className="bg-pitch border border-line p-6 mt-6">
+          <h2 className="title-stencil text-xl text-chalk mb-4">EQUIPOS</h2>
+          <EquiposAdmin />
         </div>
 
         <div className="bg-pitch border border-line p-6 mt-6">
