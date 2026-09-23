@@ -68,21 +68,28 @@ fijo para siempre. El sitio muestra una animación de números girando y
 después revela el casillero asignado. El fixture ubica a cada equipo según
 ese número, no según el orden en que se inscribió.
 
-## Panel admin: exportar la planilla y cargar resultados
+## Panel admin: exportar, equipos, fixture y mostrar/ocultar
 
 Hay una URL oculta, `/#admin` (ej. `https://tu-sitio.vercel.app/#admin`),
-con login y dos herramientas:
+con login y cuatro secciones:
 
+- **Configuración**: un interruptor para mostrar u ocultar el fixture al
+  público. Mientras está apagado, el sitio muestra un aviso de
+  "próximamente" en su lugar (útil al principio, cuando hay pocos
+  equipos anotados y el fixture se ve muy vacío). El resto del sitio
+  —inscribirse, ver el reglamento— sigue funcionando igual.
 - **Descargar planilla (.xlsx)**: dos hojas, resumen por equipo y
   listado completo de jugadores con sus DNI.
+- **Equipos**: lista de equipos con capitán y teléfono, cantidad de
+  jugadores, y el total general. Tocando un equipo se despliega el
+  resto de los jugadores (sin DNI) y la captura del comprobante.
 - **Fixture**: una lista de todos los partidos (octavos, cuartos,
   semifinal, final). Tocás el equipo que ganó cada partido y el fixture
   público se actualiza solo, mostrando quién pasó de ronda. Un partido
   queda bloqueado ("Pendiente") hasta que los dos equipos que lo
-  juegan estén definidos (por ejemplo, un cruce de cuartos no se puede
-  cargar hasta cargar los dos octavos que lo alimentan). Si cambiás un
-  resultado ya cargado, los partidos posteriores que dependían de él se
-  borran automáticamente para que los vuelvas a cargar.
+  juegan estén definidos. Si cambiás un resultado ya cargado, los
+  partidos posteriores que dependían de él se borran automáticamente
+  para que los vuelvas a cargar.
 
 **Para habilitarlo, una sola vez:**
 1. En Supabase, andá a **Authentication > Users > Add user**. Cargá tu
@@ -120,6 +127,7 @@ y quién ganó cada partido (para poder seguirlo en vivo).
 Esta versión, además de las tablas y la función, **revoca el acceso
 público a las columnas sensibles de `equipos`** (teléfono/DNI del
 capitán), agrega la tabla `resultados` (para que el admin pueda ir
-cargando quién gana cada partido) y sus políticas de acceso. Es
-importante volver a correr el `schema.sql` completo en el SQL Editor
-aunque ya lo hayas corrido antes, para que todo esto quede aplicado.
+cargando quién gana cada partido), la tabla `configuracion` (para
+mostrar/ocultar el fixture) y sus políticas de acceso. Es importante
+volver a correr el `schema.sql` completo en el SQL Editor aunque ya lo
+hayas corrido antes, para que todo esto quede aplicado.

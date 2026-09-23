@@ -34,21 +34,24 @@ export default function App() {
 function SitioPublico() {
   const [equipos, setEquipos] = useState<EquipoFixture[]>([])
   const [resultados, setResultados] = useState<Resultado[]>([])
+  const [mostrarFixture, setMostrarFixture] = useState(true)
   const [cargando, setCargando] = useState(true)
   const [vista, setVista] = useState<Vista>('fixture')
   const [posicionSorteada, setPosicionSorteada] = useState<number | null>(null)
 
   const cargarTodo = useCallback(async () => {
-    const [{ data: eq, error: e1 }, { data: res, error: e2 }] = await Promise.all([
+    const [{ data: eq, error: e1 }, { data: res, error: e2 }, { data: config }] = await Promise.all([
       supabase
         .from('equipos')
         .select('id, nombre_equipo, logo_url, posicion, created_at')
         .order('posicion', { ascending: true }),
       supabase.from('resultados').select('ronda, numero, equipo_ganador_id'),
+      supabase.from('configuracion').select('mostrar_fixture').eq('id', 1).maybeSingle(),
     ])
 
     if (!e1 && eq) setEquipos(eq as EquipoFixture[])
     if (!e2 && res) setResultados(res as Resultado[])
+    if (config) setMostrarFixture(config.mostrar_fixture)
     setCargando(false)
   }, [])
 
@@ -81,9 +84,9 @@ function SitioPublico() {
         ) : (
           <>
             <div className="mb-10 border-b border-line pb-6 flex flex-col items-center gap-4">
-             {/*  <p className="title-stencil text-lg text-chalk">
+              <p className="title-stencil text-lg text-chalk">
                 {equipos.length}/{CUPO_MAX_EQUIPOS} EQUIPOS INSCRIPTOS
-              </p> */}
+              </p>
 
               {!cupoCompleto ? (
                 <button
@@ -102,7 +105,20 @@ function SitioPublico() {
               )}
             </div>
 
-            {/* <Fixture equipos={equipos} resultados={resultados} /> */}
+            {mostrarFixture ? (
+              <Fixture equipos={equipos} resultados={resultados} />
+            ) : (
+              <div className="flex flex-col items-center text-center py-16 border border-dashed border-line">
+                <span className="text-4xl mb-4">🏆</span>
+                <p className="title-stencil text-xl text-chalk mb-2">
+                  EL FIXTURE SE PUBLICA PRONTO
+                </p>
+                <p className="text-chalk/50 text-sm max-w-sm">
+                  Todavía se están anotando equipos. En cuanto se complete la
+                  inscripción, acá vas a poder ver los cruces de cada ronda.
+                </p>
+              </div>
+            )}
           </>
         )}
       </div>

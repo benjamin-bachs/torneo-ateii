@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { EquipoCompleto, JugadorCompleto } from '../lib/types'
 import BracketEditor from './BracketEditor'
 import EquiposAdmin from './EquiposAdmin'
+import ConfiguracionAdmin from './ConfiguracionAdmin'
 
 export default function AdminPanel() {
   const [session, setSession] = useState<Session | null>(null)
@@ -177,6 +178,11 @@ export default function AdminPanel() {
         </div>
 
         <div className="bg-pitch border border-line p-6">
+          <h2 className="title-stencil text-xl text-chalk mb-4">CONFIGURACIÓN</h2>
+          <ConfiguracionAdmin />
+        </div>
+
+        <div className="bg-pitch border border-line p-6 mt-6">
           <p className="text-chalk/70 text-sm mb-6">
             Descarga un Excel con dos hojas: un resumen por equipo (capitán,
             teléfono, comprobante) y el listado completo de jugadores con DNI.

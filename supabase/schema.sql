@@ -204,7 +204,34 @@ $$;
 grant execute on function inscribir_equipo(text, text, text, text, text, text, text, jsonb, boolean, boolean)
   to anon;
 
--- 4) STORAGE: bucket para comprobantes de pago ---------------
+-- 4) CONFIGURACIÓN ---------------------------------------------
+-- Una sola fila con interruptores generales del sitio. Por ahora
+-- solo tiene si el fixture se muestra al público o no; el admin lo
+-- prende/apaga desde /#admin.
+
+create table if not exists configuracion (
+  id int primary key default 1,
+  mostrar_fixture boolean not null default true,
+  constraint configuracion_singleton check (id = 1)
+);
+
+insert into configuracion (id, mostrar_fixture)
+values (1, true)
+on conflict (id) do nothing;
+
+alter table configuracion enable row level security;
+
+drop policy if exists "Cualquiera puede ver la configuración" on configuracion;
+create policy "Cualquiera puede ver la configuración"
+  on configuracion for select
+  using (true);
+
+drop policy if exists "Admin autenticado puede editar la configuración" on configuracion;
+create policy "Admin autenticado puede editar la configuración"
+  on configuracion for update
+  using (auth.role() = 'authenticated');
+
+-- 5) STORAGE: bucket para comprobantes de pago ---------------
 -- El escudo del equipo ahora es un ícono preseteado (no se sube
 -- archivo), así que solo hace falta bucket para comprobantes.
 -- Podés crearlo desde el dashboard (Storage > New bucket > "comprobantes")
@@ -224,7 +251,7 @@ create policy "Cualquiera puede leer comprobantes"
   on storage.objects for select
   using (bucket_id = 'comprobantes');
 
--- 5) USUARIO ADMIN -------------------------------------------
+-- 6) USUARIO ADMIN -------------------------------------------
 -- Esto NO se crea por SQL: andá a Supabase > Authentication > Users
 -- > Add user > cargá tu email y una contraseña, y tildá
 -- "Auto Confirm User" (así no hace falta que confirmes por mail).

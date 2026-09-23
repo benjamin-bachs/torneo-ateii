@@ -26,6 +26,10 @@ export interface JugadorCompleto {
   orden: number
 }
 
+export interface Configuracion {
+  mostrar_fixture: boolean
+}
+
 export interface JugadorInput {
   nombre_apellido: string
   dni: string
