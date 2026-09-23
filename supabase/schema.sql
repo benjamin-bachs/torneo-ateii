@@ -84,6 +84,36 @@ create policy "Admin autenticado puede ver jugadores"
   on jugadores for select
   using (auth.role() = 'authenticated');
 
+-- El admin, desde /#admin, puede editar y borrar equipos, y agregar,
+-- editar y borrar jugadores directamente (fuera del alta normal por
+-- inscribir_equipo). El público nunca puede hacer estas operaciones.
+drop policy if exists "Admin autenticado puede editar equipos" on equipos;
+create policy "Admin autenticado puede editar equipos"
+  on equipos for update
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
+
+drop policy if exists "Admin autenticado puede borrar equipos" on equipos;
+create policy "Admin autenticado puede borrar equipos"
+  on equipos for delete
+  using (auth.role() = 'authenticated');
+
+drop policy if exists "Admin autenticado puede agregar jugadores" on jugadores;
+create policy "Admin autenticado puede agregar jugadores"
+  on jugadores for insert
+  with check (auth.role() = 'authenticated');
+
+drop policy if exists "Admin autenticado puede editar jugadores" on jugadores;
+create policy "Admin autenticado puede editar jugadores"
+  on jugadores for update
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
+
+drop policy if exists "Admin autenticado puede borrar jugadores" on jugadores;
+create policy "Admin autenticado puede borrar jugadores"
+  on jugadores for delete
+  using (auth.role() = 'authenticated');
+
 -- resultados: cualquiera puede LEER quién va ganando (para el fixture
 -- público); solo el admin autenticado puede cargar/editar/borrar.
 alter table resultados enable row level security;

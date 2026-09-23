@@ -82,7 +82,12 @@ con login y cuatro secciones:
   listado completo de jugadores con sus DNI.
 - **Equipos**: lista de equipos con capitán y teléfono, cantidad de
   jugadores, y el total general. Tocando un equipo se despliega el
-  resto de los jugadores (sin DNI) y la captura del comprobante.
+  resto de los jugadores (sin DNI) y la captura del comprobante. Desde
+  ahí podés **editar** los datos del equipo (nombre, capitán, DNI,
+  teléfono, escudo, comentarios), **eliminar** el equipo completo (pide
+  confirmación; borra también sus jugadores y, si ya había avanzado en
+  el fixture, los resultados de los partidos que ganó), y **agregar,
+  editar o borrar jugadores** uno por uno.
 - **Fixture**: una lista de todos los partidos (octavos, cuartos,
   semifinal, final). Tocás el equipo que ganó cada partido y el fixture
   público se actualiza solo, mostrando quién pasó de ronda. Un partido
@@ -128,6 +133,8 @@ Esta versión, además de las tablas y la función, **revoca el acceso
 público a las columnas sensibles de `equipos`** (teléfono/DNI del
 capitán), agrega la tabla `resultados` (para que el admin pueda ir
 cargando quién gana cada partido), la tabla `configuracion` (para
-mostrar/ocultar el fixture) y sus políticas de acceso. Es importante
-volver a correr el `schema.sql` completo en el SQL Editor aunque ya lo
+mostrar/ocultar el fixture), y las políticas que permiten al admin
+**editar/borrar equipos** y **agregar/editar/borrar jugadores**
+directamente. Es importante volver a correr el `schema.sql` completo en
+el SQL Editor aunque ya lo
 hayas corrido antes, para que todo esto quede aplicado.
