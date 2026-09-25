@@ -3,8 +3,9 @@ import type { Session } from '@supabase/supabase-js'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { EquipoCompleto, JugadorCompleto } from '../lib/types'
-import BracketEditor from './BracketEditor'
 import EquiposAdmin from './EquiposAdmin'
+import GruposAdmin from './GruposAdmin'
+import EliminatoriaAdmin from './EliminatoriaAdmin'
 import ConfiguracionAdmin from './ConfiguracionAdmin'
 
 export default function AdminPanel() {
@@ -72,6 +73,7 @@ export default function AdminPanel() {
       // Hoja 1: un renglón por equipo (resumen)
       const filasEquipos = equiposTyped.map((e) => ({
         Posición: e.posicion ?? '',
+        Grupo: e.grupo ?? '',
         Equipo: e.nombre_equipo,
         Capitán: e.capitan_nombre,
         'DNI capitán': e.capitan_dni,
@@ -207,8 +209,13 @@ export default function AdminPanel() {
         </div>
 
         <div className="bg-pitch border border-line p-6 mt-6">
-          <h2 className="title-stencil text-xl text-chalk mb-4">FIXTURE</h2>
-          <BracketEditor />
+          <h2 className="title-stencil text-xl text-chalk mb-4">FASE DE GRUPOS</h2>
+          <GruposAdmin />
+        </div>
+
+        <div className="bg-pitch border border-line p-6 mt-6">
+          <h2 className="title-stencil text-xl text-chalk mb-4">ELIMINATORIA</h2>
+          <EliminatoriaAdmin />
         </div>
 
         <a href="/" className="block mt-8 text-sm text-chalk/40 hover:text-chalk">

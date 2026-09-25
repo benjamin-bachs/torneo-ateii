@@ -29,6 +29,13 @@ create table if not exists equipos (
 alter table equipos add column if not exists capitan_dni text;
 alter table equipos add column if not exists posicion int unique;
 
+-- Grupo de la fase de grupos ('A', 'B' o 'C'). Lo asigna el admin desde
+-- /#admin; queda null hasta que se sortee/arme la fase de grupos.
+alter table equipos add column if not exists grupo text;
+alter table equipos drop constraint if exists equipos_grupo_check;
+alter table equipos add constraint equipos_grupo_check
+  check (grupo is null or grupo in ('A', 'B', 'C'));
+
 -- Respaldo a nivel de base: aunque algo pase por alto la función,
 -- esto impide que dos equipos queden con el mismo escudo.
 create unique index if not exists equipos_logo_url_unique_idx
@@ -74,7 +81,7 @@ create policy "Cualquiera puede ver los equipos (fixture)"
 -- mostrara. Acá se restringe: el público solo puede leer las columnas
 -- necesarias para el fixture; el resto queda reservado al admin logueado.
 revoke select on equipos from anon;
-grant select (id, nombre_equipo, logo_url, posicion, created_at) on equipos to anon;
+grant select (id, nombre_equipo, logo_url, posicion, grupo, created_at) on equipos to anon;
 grant select on equipos to authenticated;
 
 -- jugadores: nadie público puede leer nada (ni con policy ni con grant).
@@ -137,6 +144,71 @@ drop policy if exists "Admin autenticado puede borrar resultados" on resultados;
 create policy "Admin autenticado puede borrar resultados"
   on resultados for delete
   using (auth.role() = 'authenticated');
+
+-- Horario de los 3 partidos de cada grupo (round-robin). Los cruces se
+-- derivan de los equipos de cada grupo (ver src/lib/grupos.ts), así que
+-- acá solo se guarda el horario de cada partido.
+create table if not exists partidos_grupo (
+  id uuid primary key default gen_random_uuid(),
+  grupo text not null check (grupo in ('A', 'B', 'C')),
+  numero int not null check (numero between 1 and 3),
+  horario text,
+  cancha text,
+  unique (grupo, numero)
+);
+
+-- Las 9 filas (3 grupos x 3 partidos) para que el admin solo cargue horarios.
+insert into partidos_grupo (grupo, numero) values
+  ('A', 1), ('A', 2), ('A', 3),
+  ('B', 1), ('B', 2), ('B', 3),
+  ('C', 1), ('C', 2), ('C', 3)
+on conflict (grupo, numero) do nothing;
+
+alter table partidos_grupo enable row level security;
+
+drop policy if exists "Cualquiera puede ver los partidos de grupo" on partidos_grupo;
+create policy "Cualquiera puede ver los partidos de grupo"
+  on partidos_grupo for select
+  using (true);
+
+drop policy if exists "Admin autenticado puede editar partidos de grupo" on partidos_grupo;
+create policy "Admin autenticado puede editar partidos de grupo"
+  on partidos_grupo for all
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
+
+-- Sembrado de la eliminatoria: qué equipo juega cada lado de las semis
+-- (los 3 punteros + mejor segundo los elige el admin a mano). El ganador
+-- de cada partido se guarda en la tabla resultados.
+create table if not exists cruces (
+  id uuid primary key default gen_random_uuid(),
+  ronda text not null check (ronda in ('semifinal', 'final')),
+  numero int not null,
+  lado int not null check (lado in (0, 1)),
+  equipo_id uuid references equipos(id) on delete cascade,
+  unique (ronda, numero, lado)
+);
+
+insert into cruces (ronda, numero, lado) values
+  ('semifinal', 1, 0), ('semifinal', 1, 1),
+  ('semifinal', 2, 0), ('semifinal', 2, 1)
+on conflict (ronda, numero, lado) do nothing;
+
+alter table cruces enable row level security;
+
+drop policy if exists "Cualquiera puede ver los cruces" on cruces;
+create policy "Cualquiera puede ver los cruces"
+  on cruces for select
+  using (true);
+
+drop policy if exists "Admin autenticado puede editar los cruces" on cruces;
+create policy "Admin autenticado puede editar los cruces"
+  on cruces for all
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
+
+grant select on partidos_grupo, cruces to anon;
+grant all on partidos_grupo, cruces to authenticated;
 
 -- Nadie inserta/edita/borra directo en equipos ni jugadores;
 -- solo la función inscribir_equipo (SECURITY DEFINER) puede.
