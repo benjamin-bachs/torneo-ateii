@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, Suspense, lazy } from 'react'
 import { supabase, CUPO_MAX_EQUIPOS } from './lib/supabase'
-import { EquipoFixture } from './lib/types'
+import { EquipoFixture, PartidoGrupo, Cruce } from './lib/types'
 import { Resultado } from './lib/bracket'
 import Fixture from './components/Fixture'
 import RegistrationForm from './components/RegistrationForm'
@@ -34,24 +34,31 @@ export default function App() {
 function SitioPublico() {
   const [equipos, setEquipos] = useState<EquipoFixture[]>([])
   const [resultados, setResultados] = useState<Resultado[]>([])
-  const [mostrarFixture, setMostrarFixture] = useState(true)
+  const [cruces, setCruces] = useState<Cruce[]>([])
+  const [partidosGrupo, setPartidosGrupo] = useState<PartidoGrupo[]>([])
   const [cargando, setCargando] = useState(true)
   const [vista, setVista] = useState<Vista>('fixture')
   const [posicionSorteada, setPosicionSorteada] = useState<number | null>(null)
 
   const cargarTodo = useCallback(async () => {
-    const [{ data: eq, error: e1 }, { data: res, error: e2 }, { data: config }] = await Promise.all([
-      supabase
-        .from('equipos')
-        .select('id, nombre_equipo, logo_url, posicion, created_at')
-        .order('posicion', { ascending: true }),
-      supabase.from('resultados').select('ronda, numero, equipo_ganador_id'),
-      supabase.from('configuracion').select('mostrar_fixture').eq('id', 1).maybeSingle(),
-    ])
+    const [{ data: eq, error: e1 }, { data: res }, { data: cr }, { data: pg }] =
+      await Promise.all([
+        supabase
+          .from('equipos')
+          .select('id, nombre_equipo, logo_url, posicion, grupo, created_at')
+          .order('posicion', { ascending: true }),
+        supabase
+          .from('resultados')
+          .select('ronda, numero, equipo_ganador_id')
+          .in('ronda', ['semifinal', 'final']),
+        supabase.from('cruces').select('ronda, numero, lado, equipo_id'),
+        supabase.from('partidos_grupo').select('grupo, numero, horario, cancha'),
+      ])
 
     if (!e1 && eq) setEquipos(eq as EquipoFixture[])
-    if (!e2 && res) setResultados(res as Resultado[])
-    if (config) setMostrarFixture(config.mostrar_fixture)
+    if (res) setResultados(res as Resultado[])
+    if (cr) setCruces(cr as Cruce[])
+    if (pg) setPartidosGrupo(pg as PartidoGrupo[])
     setCargando(false)
   }, [])
 
@@ -105,20 +112,12 @@ function SitioPublico() {
               )}
             </div>
 
-            {mostrarFixture ? (
-              <Fixture equipos={equipos} resultados={resultados} />
-            ) : (
-              <div className="flex flex-col items-center text-center py-16 border border-dashed border-line">
-                <span className="text-4xl mb-4">🏆</span>
-                <p className="title-stencil text-xl text-chalk mb-2">
-                  EL FIXTURE SE PUBLICA PRONTO
-                </p>
-                <p className="text-chalk/50 text-sm max-w-sm">
-                  Todavía se están anotando equipos. En cuanto se complete la
-                  inscripción, acá vas a poder ver los cruces de cada ronda.
-                </p>
-              </div>
-            )}
+            <Fixture
+              equipos={equipos}
+              resultados={resultados}
+              cruces={cruces}
+              partidosGrupo={partidosGrupo}
+            />
           </>
         )}
       </div>

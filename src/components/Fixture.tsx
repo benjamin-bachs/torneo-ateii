@@ -1,193 +1,203 @@
-import { EquipoFixture } from '../lib/types'
-import {
-  RONDAS,
-  RondaId,
-  Resultado,
-  armarResultadosMap,
-  armarSlotsOctavos,
-  resolverEquipo,
-} from '../lib/bracket'
+import { EquipoFixture, PartidoGrupo, Cruce } from '../lib/types'
+import { Resultado, RONDAS, armarResultadosMap, armarCrucesMap, resolverEquipoId } from '../lib/bracket'
+import { GRUPOS, equiposDelGrupo, armarPartidosDeGrupo, horarioDePartido } from '../lib/grupos'
 import { escudoDeId } from '../lib/escudos'
-import { CUPO_MAX_EQUIPOS } from '../lib/supabase'
 
 interface Props {
   equipos: EquipoFixture[]
   resultados: Resultado[]
+  cruces: Cruce[]
+  partidosGrupo: PartidoGrupo[]
 }
 
-function SlotOctavos({ equipo, numero, esGanador }: { equipo?: EquipoFixture; numero: number; esGanador: boolean }) {
+function Escudo({ equipo, size = 16 }: { equipo?: EquipoFixture; size?: number }) {
   const escudo = escudoDeId(equipo?.logo_url)
-  return (
-    <div
-      className={`flex items-center gap-2 bg-pitch border px-3 py-3 min-w-0 ${
-        esGanador ? 'border-lime' : 'border-line'
-      }`}
-    >
-      <span className="title-stencil text-lime text-sm w-5 text-center shrink-0">{numero}</span>
-      {equipo ? (
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="w-7 h-7 bg-pitchdeep border border-line shrink-0 flex items-center justify-center">
-            {escudo && <escudo.Icon size={14} color={escudo.color} strokeWidth={2} />}
-          </div>
-          <span className={`truncate text-sm ${esGanador ? 'text-lime font-semibold' : 'font-semibold'}`}>
-            {equipo.nombre_equipo}
-          </span>
-        </div>
-      ) : (
-        <span className="text-chalk/40 italic text-sm">Vacante</span>
-      )}
-    </div>
-  )
-}
-
-function PartidoPosterior({
-  equipoA,
-  equipoB,
-  ganadorId,
-}: {
-  equipoA?: EquipoFixture
-  equipoB?: EquipoFixture
-  ganadorId?: string
-}) {
-  const linea = (eq?: EquipoFixture) => {
-    const esGanador = !!eq && eq.id === ganadorId
-    return (
-      <p className={`truncate ${esGanador ? 'text-lime font-semibold' : eq ? 'text-chalk/80' : 'text-chalk/30 italic'}`}>
-        {eq ? eq.nombre_equipo : 'Pendiente'}
-      </p>
-    )
+  if (!escudo) {
+    return <div className="w-7 h-7 bg-pitchdeep border border-line shrink-0" />
   }
   return (
-    <div className="border border-line px-3 py-2 text-sm space-y-1 h-fit">
-      {linea(equipoA)}
-      {linea(equipoB)}
+    <div className="w-7 h-7 bg-pitchdeep border border-line shrink-0 flex items-center justify-center">
+      <escudo.Icon size={size} color={escudo.color} strokeWidth={2} />
     </div>
   )
 }
 
-function ColLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs uppercase tracking-wide text-amber mb-2">{children}</p>
+function LineaEquipo({ equipo, ganadorId }: { equipo?: EquipoFixture; ganadorId?: string }) {
+  const esGanador = !!equipo && equipo.id === ganadorId
+  return (
+    <p
+      className={`truncate text-sm ${
+        equipo
+          ? esGanador
+            ? 'text-lime font-semibold'
+            : 'text-chalk/80'
+          : 'text-chalk/30 italic'
+      }`}
+    >
+      {equipo ? equipo.nombre_equipo : 'Pendiente'}
+    </p>
+  )
 }
 
-export default function Fixture({ equipos, resultados }: Props) {
-  const slotsOctavos = armarSlotsOctavos(equipos, CUPO_MAX_EQUIPOS)
+function PartidoEliminatoria({
+  titulo,
+  local,
+  visitante,
+  ganadorId,
+}: {
+  titulo: string
+  local?: EquipoFixture
+  visitante?: EquipoFixture
+  ganadorId?: string
+}) {
+  return (
+    <div className="border border-line bg-pitch px-4 py-3">
+      <p className="text-xs uppercase tracking-wide text-amber mb-2">{titulo}</p>
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <Escudo equipo={local} />
+          <LineaEquipo equipo={local} ganadorId={ganadorId} />
+        </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <Escudo equipo={visitante} />
+          <LineaEquipo equipo={visitante} ganadorId={ganadorId} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function Fixture({ equipos, resultados, cruces, partidosGrupo }: Props) {
   const equiposPorId = new Map(equipos.map((e) => [e.id, e]))
   const resultadosMap = armarResultadosMap(resultados)
+  const crucesMap = armarCrucesMap(cruces)
 
-  const octavos = Array.from({ length: 8 }, (_, i) => [slotsOctavos[i * 2], slotsOctavos[i * 2 + 1]])
-
-  const resolver = (ronda: RondaId, numero: number, lado: 0 | 1) =>
-    resolverEquipo(ronda, numero, lado, slotsOctavos, equiposPorId, resultadosMap)
+  const resolver = (ronda: 'semifinal' | 'final', numero: number, lado: 0 | 1) => {
+    const id = resolverEquipoId(ronda, numero, lado, crucesMap, resultadosMap)
+    return id ? equiposPorId.get(id) : undefined
+  }
 
   return (
-    <div className="w-full">
-      <h2 className="title-stencil text-2xl md:text-3xl text-chalk mb-6">
-        FIXTURE — ELIMINACIÓN DIRECTA
-      </h2>
+    <div className="w-full space-y-12">
+      {/* FASE DE GRUPOS */}
+      <section>
+        <h2 className="title-stencil text-2xl md:text-3xl text-chalk mb-2">
+          FASE DE GRUPOS
+        </h2>
+        <p className="text-chalk/50 text-sm mb-6">
+          3 grupos de 3 equipos, 3 partidos por grupo. Clasifican los punteros
+          de cada grupo y el mejor segundo.
+        </p>
 
-      {/* Mobile/tablet: todo apilado en orden de lectura */}
-      <div className="lg:hidden space-y-8">
-        <div>
-          <ColLabel>Octavos de final</ColLabel>
-          <div className="space-y-3">
-            {octavos.map((par, i) => (
-              <div key={i} className="space-y-px">
-                <SlotOctavos
-                  equipo={par[0]}
-                  numero={i * 2 + 1}
-                  esGanador={!!par[0] && resultadosMap.octavos[i + 1] === par[0]?.id}
-                />
-                <SlotOctavos
-                  equipo={par[1]}
-                  numero={i * 2 + 2}
-                  esGanador={!!par[1] && resultadosMap.octavos[i + 1] === par[1]?.id}
-                />
+        <div className="grid gap-4 md:grid-cols-3">
+          {GRUPOS.map((grupo) => {
+            const delGrupo = equiposDelGrupo(equipos, grupo)
+            const partidos = armarPartidosDeGrupo(equipos, grupo)
+            return (
+              <div key={grupo} className="border border-line bg-pitch">
+                <div className="border-b border-line px-4 py-3 flex items-center justify-between">
+                  <h3 className="title-stencil text-lg text-amber">Grupo {grupo}</h3>
+                  <span className="text-xs text-chalk/50">{delGrupo.length}/3</span>
+                </div>
+
+                <ul className="px-4 py-3 space-y-2">
+                  {delGrupo.length === 0 && (
+                    <li className="text-chalk/40 italic text-sm">Sin equipos asignados</li>
+                  )}
+                  {delGrupo.map((eq) => (
+                    <li key={eq.id} className="flex items-center gap-2 min-w-0">
+                      <Escudo equipo={eq} />
+                      <span className="truncate text-sm font-semibold text-chalk">
+                        {eq.nombre_equipo}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="border-t border-line px-4 py-3 space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-amber mb-1">Partidos</p>
+                  {partidos.length === 0 && (
+                    <p className="text-chalk/40 italic text-sm">A confirmar</p>
+                  )}
+                  {partidos.map((p) => {
+                    const local = equiposPorId.get(p.localId)
+                    const visitante = equiposPorId.get(p.visitanteId)
+                    const horario = horarioDePartido(partidosGrupo, grupo, p.numero)?.horario
+                    return (
+                      <div
+                        key={p.numero}
+                        className="flex items-center justify-between gap-3 text-sm"
+                      >
+                        <span className="truncate text-chalk/80">
+                          {local?.nombre_equipo ?? '?'}{' '}
+                          <span className="text-chalk/40">vs</span>{' '}
+                          {visitante?.nombre_equipo ?? '?'}
+                        </span>
+                        <span className="shrink-0 text-lime">
+                          {horario || 'A confirmar'}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            ))}
-          </div>
+            )
+          })}
         </div>
+      </section>
 
-        {RONDAS.filter((r) => r.id !== 'octavos').map((rondaDef) => (
-          <div key={rondaDef.id}>
-            <ColLabel>{rondaDef.label}</ColLabel>
-            <div className="space-y-3">
-              {Array.from({ length: rondaDef.partidos }, (_, i) => i + 1).map((numero) => (
-                <PartidoPosterior
+      {/* ELIMINATORIA */}
+      <section>
+        <h2 className="title-stencil text-2xl md:text-3xl text-chalk mb-2">
+          ELIMINATORIA
+        </h2>
+        <p className="text-chalk/50 text-sm mb-6">
+          Los 3 punteros y el mejor segundo juegan semifinales y final.
+        </p>
+
+        <div className="grid gap-6 lg:grid-cols-3 lg:items-center">
+          <div className="space-y-3">
+            {RONDAS.filter((r) => r.id === 'semifinal').map((ronda) =>
+              Array.from({ length: ronda.partidos }, (_, i) => i + 1).map((numero) => (
+                <PartidoEliminatoria
                   key={numero}
-                  equipoA={resolver(rondaDef.id, numero, 0)}
-                  equipoB={resolver(rondaDef.id, numero, 1)}
-                  ganadorId={resultadosMap[rondaDef.id][numero]}
+                  titulo={`Semifinal ${numero}`}
+                  local={resolver('semifinal', numero, 0)}
+                  visitante={resolver('semifinal', numero, 1)}
+                  ganadorId={resultadosMap.semifinal[numero]}
                 />
-              ))}
-            </div>
+              ))
+            )}
           </div>
-        ))}
-      </div>
 
-      {/* Desktop grande: grid tipo bracket con 4 rondas */}
-      <div
-        className="hidden lg:grid lg:gap-x-6 lg:gap-y-3"
-        style={{ gridTemplateColumns: '1.7fr 1fr 1fr 1fr' }}
-      >
-        <div className="col-start-1 row-start-1"><ColLabel>Octavos de final</ColLabel></div>
-        <div className="col-start-2 row-start-1"><ColLabel>Cuartos de final</ColLabel></div>
-        <div className="col-start-3 row-start-1"><ColLabel>Semifinal</ColLabel></div>
-        <div className="col-start-4 row-start-1"><ColLabel>Final</ColLabel></div>
-
-        {octavos.map((par, i) => (
-          <div key={i} className="col-start-1 space-y-px" style={{ gridRow: i + 2 }}>
-            <SlotOctavos
-              equipo={par[0]}
-              numero={i * 2 + 1}
-              esGanador={!!par[0] && resultadosMap.octavos[i + 1] === par[0]?.id}
-            />
-            <SlotOctavos
-              equipo={par[1]}
-              numero={i * 2 + 2}
-              esGanador={!!par[1] && resultadosMap.octavos[i + 1] === par[1]?.id}
+          <div>
+            <PartidoEliminatoria
+              titulo="Final"
+              local={resolver('final', 1, 0)}
+              visitante={resolver('final', 1, 1)}
+              ganadorId={resultadosMap.final[1]}
             />
           </div>
-        ))}
 
-        {Array.from({ length: 4 }, (_, i) => i + 1).map((numero) => {
-          const rowStart = 2 + (numero - 1) * 2
-          return (
-            <div key={numero} className="col-start-2 self-center" style={{ gridRow: `${rowStart} / ${rowStart + 2}` }}>
-              <PartidoPosterior
-                equipoA={resolver('cuartos', numero, 0)}
-                equipoB={resolver('cuartos', numero, 1)}
-                ganadorId={resultadosMap.cuartos[numero]}
-              />
-            </div>
-          )
-        })}
-
-        {Array.from({ length: 2 }, (_, i) => i + 1).map((numero) => {
-          const rowStart = 2 + (numero - 1) * 4
-          return (
-            <div key={numero} className="col-start-3 self-center" style={{ gridRow: `${rowStart} / ${rowStart + 4}` }}>
-              <PartidoPosterior
-                equipoA={resolver('semifinal', numero, 0)}
-                equipoB={resolver('semifinal', numero, 1)}
-                ganadorId={resultadosMap.semifinal[numero]}
-              />
-            </div>
-          )
-        })}
-
-        <div className="col-start-4 self-center" style={{ gridRow: '2 / 10' }}>
-          <PartidoPosterior
-            equipoA={resolver('final', 1, 0)}
-            equipoB={resolver('final', 1, 1)}
-            ganadorId={resultadosMap.final[1]}
-          />
-          {resultadosMap.final[1] && (
-            <p className="title-stencil text-lime text-sm mt-3">
-              🏆 {equiposPorId.get(resultadosMap.final[1])?.nombre_equipo}
-            </p>
-          )}
+          <div>
+            {resultadosMap.final[1] ? (
+              <div className="border border-lime bg-lime/10 px-4 py-6 text-center">
+                <p className="text-xs uppercase tracking-widest text-amber mb-3">Campeón</p>
+                <div className="flex items-center justify-center gap-2">
+                  <Escudo equipo={equiposPorId.get(resultadosMap.final[1])} size={20} />
+                  <p className="title-stencil text-xl text-lime">
+                    🏆 {equiposPorId.get(resultadosMap.final[1])?.nombre_equipo}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="border border-dashed border-line px-4 py-6 text-center">
+                <p className="text-chalk/40 text-sm italic">Campeón a definir</p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
